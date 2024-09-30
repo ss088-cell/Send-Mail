@@ -2,31 +2,34 @@
 <html>
   <head>
     <base target="_top">
-  </head>
-  <body>
-    <h3>Upload Google Sheet</h3>
-    <input type="file" id="fileInput" accept=".xlsx, .csv">
-    <br><br>
-    <button onclick="uploadFile()">Upload and Send</button>
+    <script type="text/javascript">
+      function showPicker() {
+        // Load the picker API and show the picker
+        google.script.run.withSuccessHandler(createPicker).loadPicker();
+      }
 
-    <script>
-      function uploadFile() {
-        var fileInput = document.getElementById("fileInput");
-        var file = fileInput.files[0];
+      function createPicker(developerKey) {
+        var picker = new google.picker.PickerBuilder()
+          .addView(google.picker.ViewId.SPREADSHEETS)
+          .setOAuthToken(google.script.run.getOAuthToken())
+          .setDeveloperKey(developerKey)
+          .setCallback(pickerCallback)
+          .build();
+        picker.setVisible(true);
+      }
 
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var fileContent = e.target.result;
-
-          // Send the file content to Apps Script
-          google.script.run
-            .withSuccessHandler(function(response) {
-              alert("File sent successfully to email!");
-            })
-            .sendFileToEmail(file.name, fileContent);
-        };
-        reader.readAsDataURL(file);
+      function pickerCallback(data) {
+        if (data.action == google.picker.Action.PICKED) {
+          var fileId = data.docs[0].id;
+          // Send the selected file ID to Apps Script
+          google.script.run.sendSheetToEmail(fileId);
+          alert("File has been sent!");
+        }
       }
     </script>
+  </head>
+  <body>
+    <h3>Select a Google Sheet from Drive</h3>
+    <button onclick="showPicker()">Select Sheet</button>
   </body>
 </html>
